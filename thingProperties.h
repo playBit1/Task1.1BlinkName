@@ -6,12 +6,23 @@
 const char SSID[]     = SECRET_SSID;    // Network SSID (name)
 const char PASS[]     = SECRET_OPTIONAL_PASS;    // Network password (use for WPA, or use as key for WEP)
 
+bool pushButton;
+char* letters[] = {
+".-", "-...", "-.-.", "-..", ".", "..-.", "--.", "....", "..", // A-I
+".---", "-.-", ".-..", "--", "-.", "---", ".--.", "--.-", ".-.", // J-R 
+"...", "-", "..-", "...-", ".--", "-..-", "-.--", "--.." // S-Z
+};
+const byte numChars = 32;
+char receivedChars[numChars];   
+bool newData = false;
+
 void onPushButtonChange();
 void longBeep();
 void shortBeep();
 
 
-bool pushButton;
+
+
 
 
 void initProperties(){

@@ -16,11 +16,10 @@
 
 #include "thingProperties.h"
 
+
 void setup() {
   // Initialize serial and wait for port to open:
   Serial.begin(9600);
-  // This delay gives the chance to wait for a Serial Monitor without blocking if none is found
-  delay(1500); 
 
   // Defined in thingProperties.h
   initProperties();
@@ -28,13 +27,6 @@ void setup() {
   // Connect to Arduino IoT Cloud
   ArduinoCloud.begin(ArduinoIoTPreferredConnection);
   
-  /*
-     The following function allows you to obtain more information
-     related to the state of network and IoT Cloud connection and errors
-     the higher number the more granular information you’ll get.
-     The default is 0 (only errors).
-     Maximum is 4
- */
   setDebugMessageLevel(2);
   ArduinoCloud.printDebugInfo();
   pinMode(LED_BUILTIN, OUTPUT);
@@ -43,40 +35,76 @@ void setup() {
 
 void loop() {
   ArduinoCloud.update();
-  // Your code here 
+  recvWithEndMarker();
+  
+  if (pushButton && newData) {
+    Serial.print("Blinking: ");
+    Serial.println(receivedChars);
+    
+    findWord(receivedChars);
+    
+    newData = false;
+    pushButton = false;
+    
+    }
 
-  if (pushButton){
-    //B
-    longBeep();
-    shortBeep();
-    shortBeep();
-    shortBeep();
-    delay(1000);
+  
+}
+
+void findWord(char* word) {
+  for (int i = 0; word[i] != '\0'; i++) {
+    char cr = toupper(word[i]);
     
-    //I
-    shortBeep();
-    shortBeep();
-    delay(1000);
+    if (cr >= 'A' && cr <= 'Z') { //letters
+      int index = cr - 'A';
+      blinkCode(letters[index]);
+      delay(800);
+      
+    } 
+    else if (cr == ' ') { //spaces
+      delay(1000);
+      
+    }
     
-    //N
-    longBeep();
-    shortBeep();
-    delay(1000);
-    
-    //U
-    shortBeep();
-    shortBeep();
-    longBeep();
-    delay(1000);
-    
-    //L
-    shortBeep();
-    longBeep();
-    shortBeep();
-    shortBeep();
+  }
+  Serial.print(word);
+  Serial.println(": Blinked!");
+}
+
+void blinkCode(char* mCode) {
+  for (int i = 0; mCode[i] != '\0'; i++) {
+    if (mCode[i] == '.') {
+      shortBeep();
+    } 
+    else if (mCode[i] == '-') {
+      longBeep();
+    }
   }
 }
 
+//From Serial input Basics
+void recvWithEndMarker() {
+    static byte ndx = 0;
+    char endMarker = '\n';
+    char rc;
+    
+    while (Serial.available() > 0 && newData == false) {
+        rc = Serial.read();
+
+        if (rc != endMarker) {
+            receivedChars[ndx] = rc;
+            ndx++;
+            if (ndx >= numChars) {
+                ndx = numChars - 1;
+            }
+        }
+        else {
+            receivedChars[ndx] = '\0'; // terminate the string
+            ndx = 0;
+            newData = true;
+        }
+    }
+}
 
 /*
   Since PushButton is READ_WRITE variable, onPushButtonChange() is
